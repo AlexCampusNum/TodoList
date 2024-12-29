@@ -8,6 +8,7 @@ import android.view.View
 import android.widget.Toast
 import com.example.todolist.databinding.ActivityAddTodoBinding
 import com.example.todolist.models.Todo
+import java.io.Serializable
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -51,7 +52,7 @@ class AddTodoActivity : AppCompatActivity() {
                     todo = Todo(null, title, todoDescription, formatter.format(Date()))
                 }
                 var intent = Intent()
-                intent.putExtra("todo", todo)
+                intent.putExtra("todo", todo as Serializable)
                 setResult(Activity.RESULT_OK, intent)
                 finish()
             }else{
@@ -62,7 +63,7 @@ class AddTodoActivity : AppCompatActivity() {
 
         binding.imgDelete.setOnClickListener {
             var intent = Intent()
-            intent.putExtra("todo", oldTodo)
+            intent.putExtra("todo", oldTodo as Serializable)
             intent.putExtra("delete_todo", true)
             setResult(Activity.RESULT_OK, intent)
             finish()

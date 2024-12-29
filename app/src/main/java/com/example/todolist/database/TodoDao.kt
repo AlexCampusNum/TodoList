@@ -17,4 +17,7 @@ interface TodoDao {
 
     @Query("UPDATE todo_table set title = :title, note = :note where id = :id")
     suspend fun update(id: Int?, title: String?, note: String?)
+
+//    @Update
+//    suspend fun update(todo: Todo)
 }
