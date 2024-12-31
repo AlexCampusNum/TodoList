@@ -12,7 +12,8 @@
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="@color/purple_200">
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
@@ -28,7 +29,7 @@
                 android:scrollHorizontally="true"
                 android:singleLine="true"
                 android:text="Title"
-                android:textColor="@color/white"
+                android:textColor="@color/black"
                 android:textSize="18sp"
                 android:textStyle="bold"/>
         </RelativeLayout>
@@ -39,7 +40,7 @@
             android:maxLines="10"
             android:padding="8dp"
             android:textStyle="normal"
-            android:text="Note"
+            android:text="@string/note"
             android:textColor="@color/white"
             android:textSize="14sp"/>
         <TextView
@@ -53,7 +54,7 @@
             android:textStyle="normal"
             android:maxLines="1"
             android:padding="8dp"
-            android:text="Date"
+            android:text="@string/date"
             android:textColor="@color/white"
             android:textSize="14sp"/>
     </LinearLayout>
