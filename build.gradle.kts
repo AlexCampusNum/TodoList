@@ -5,3 +5,4 @@ plugins {
     alias(libs.plugins.kotlin.kapt)
     id("com.google.devtools.ksp") version "2.0.21-1.0.27" apply false
 }
+

@@ -83,4 +83,13 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-test-manifest")
     implementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    implementation("com.google.api-client:google-api-client-android:2.2.0"){exclude(group = "org.apache.httpcomponents")}
+    implementation("com.google.oauth-client:google-oauth-client-jetty:1.34.1"){exclude(group = "org.apache.httpcomponents")}
+    implementation("com.google.apis:google-api-services-calendar:v3-rev20230707-2.0.0"){exclude(group = "org.apache.httpcomponents")}
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
+    implementation("androidx.navigation:navigation-compose:2.6.0")
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
+
+
 }
