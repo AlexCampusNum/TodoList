@@ -1,5 +1,6 @@
 package com.example.todolist.signin
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -66,10 +67,22 @@ class SignInActivity : AppCompatActivity() {
         try {
             val account = completedTask.getResult(ApiException::class.java)
             if (account != null && !account.email.isNullOrEmpty()) {
+                Log.d("SignInActivity", "Compte connecté avec email: ${account.email}")
+
+                // Stocker le compte dans les SharedPreferences
+                getSharedPreferences("my_prefs", Context.MODE_PRIVATE).edit().apply {
+                    putString("user_email", account.email)
+                    putString("user_display_name", account.displayName)
+                    apply()
+                }
+
+                setCurrentAccount(account)  // Stocker dans le companion object
+
                 if (GoogleSignIn.hasPermissions(account, Scope(CalendarScopes.CALENDAR))) {
-                    setCurrentAccount(account)
+                    Log.d("SignInActivity", "Permissions calendrier OK")
                     updateUI(account)
                 } else {
+                    Log.d("SignInActivity", "Demande de permissions calendrier")
                     GoogleSignIn.requestPermissions(
                         this,
                         RC_SIGN_IN,
@@ -82,7 +95,7 @@ class SignInActivity : AppCompatActivity() {
                 updateUI(null)
             }
         } catch (e: ApiException) {
-            Log.w("SignInActivity", "signInResult:failed code=" + e.statusCode)
+            Log.e("SignInActivity", "Erreur de connexion: ${e.message}", e)
             Toast.makeText(this, "La connexion a échoué. Erreur : ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
             updateUI(null)
         }

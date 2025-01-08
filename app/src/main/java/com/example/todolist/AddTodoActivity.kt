@@ -15,6 +15,7 @@ import androidx.compose.ui.semantics.text
 import com.example.todolist.databinding.ActivityAddTodoBinding
 import com.example.todolist.models.Todo
 import com.example.todolist.signin.SignInActivity
+import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
@@ -148,7 +149,7 @@ class AddTodoActivity : AppCompatActivity() {
             if (email != null) {
                 val event = createGoogleCalendarEvent(title, todoDescription)
                 insertEventToGoogleCalendar(event, email)
-                setResultAndFinish()
+//                setResultAndFinish()
             } else {
                 Log.e("AddTodoActivity", "Erreur : email du compte Google non disponible")
                 Toast.makeText(this, "Erreur : email du compte Google non disponible", Toast.LENGTH_SHORT).show()
@@ -164,39 +165,86 @@ class AddTodoActivity : AppCompatActivity() {
             summary = title
             setDescription(description)
 
-            selectedDate?.time?.let {
-                val startDateTime = EventDateTime().setDate(com.google.api.client.util.DateTime(it))
+            selectedDate?.time?.let { date ->
+                Log.d("AddTodoActivity", "Création événement pour la date: ${date}")
+                val startDateTime = EventDateTime().apply {
+                    setDate(com.google.api.client.util.DateTime(date))
+                }
                 setStart(startDateTime)
                 setEnd(startDateTime)
             } ?: run {
                 Log.e("AddTodoActivity", "Erreur : date sélectionnée non disponible")
+                throw IllegalStateException("Date sélectionnée non disponible")
             }
         }
     }
 
 
     private fun insertEventToGoogleCalendar(event: Event, email: String) {
-        val googleSignInAccount = SignInActivity.getLastSignedInAccount()
-        if (googleSignInAccount?.email.isNullOrEmpty()) {
-            Toast.makeText(this, "Erreur : email du compte Google non disponible", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val credential = GoogleAccountCredential.usingOAuth2(this, listOf(CalendarScopes.CALENDAR))
-        credential.selectedAccount = Account(googleSignInAccount?.email ?: "", "com.google")
-
-        val transport = NetHttpTransport()
-        val jsonFactory = GsonFactory.getDefaultInstance()
-        val calendarService = Calendar.Builder(transport, jsonFactory, credential)
-            .setApplicationName("My ToDo List")
-            .build()
-
         try {
-            calendarService.events().insert("primary", event).execute()
-            Toast.makeText(this, "Tâche ajoutée au calendrier", Toast.LENGTH_SHORT).show()
+            // Essayer d'abord de récupérer le compte depuis GoogleSignIn
+            var account = GoogleSignIn.getLastSignedInAccount(this)
+
+            if (account == null) {
+                // Si null, essayer de récupérer depuis SignInActivity
+                account = SignInActivity.getLastSignedInAccount()
+            }
+
+            if (account == null) {
+                Log.e("AddTodoActivity", "Compte Google non disponible - tentative de reconnexion")
+                // Rediriger vers SignInActivity
+                val intent = Intent(this, SignInActivity::class.java)
+                startActivity(intent)
+                return
+            }
+
+            Log.d("AddTodoActivity", "Tentative d'ajout avec email: ${account.email}")
+
+            val credential = GoogleAccountCredential.usingOAuth2(
+                this,
+                listOf(CalendarScopes.CALENDAR)
+            ).apply {
+                selectedAccount = Account(account.email!!, "com.google")
+            }
+
+            Log.d("AddTodoActivity", "Credential créé")
+
+            val transport = NetHttpTransport()
+            val jsonFactory = GsonFactory.getDefaultInstance()
+
+            val calendarService = Calendar.Builder(transport, jsonFactory, credential)
+                .setApplicationName("My ToDo List")
+                .build()
+
+            Log.d("AddTodoActivity", "Service Calendar créé")
+
+            // Exécuter la requête dans un thread séparé
+            Thread {
+                try {
+                    val createdEvent = calendarService.events().insert("primary", event).execute()
+                    runOnUiThread {
+                        Log.d("AddTodoActivity", "Événement créé avec succès: ${createdEvent.htmlLink}")
+                        Toast.makeText(this, "Tâche ajoutée au calendrier", Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: Exception) {
+                    Log.e("AddTodoActivity", "Erreur lors de l'insertion de l'événement", e)
+                    runOnUiThread {
+                        Toast.makeText(
+                            this,
+                            "Erreur lors de l'ajout au calendrier : ${e.message}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+            }.start()
+
         } catch (e: Exception) {
-            e.printStackTrace()
-            Toast.makeText(this, "Erreur lors de l'ajout au calendrier : ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+            Log.e("AddTodoActivity", "Erreur lors de la configuration du service Calendar", e)
+            Toast.makeText(
+                this,
+                "Erreur de configuration : ${e.message}",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 
