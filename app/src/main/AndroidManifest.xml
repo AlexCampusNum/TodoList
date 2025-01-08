@@ -5,6 +5,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.USE_CREDENTIALS" />
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <uses-permission android:name="android.permission.WRITE_CALENDAR" />
 
     <application
         android:allowBackup="true"
@@ -19,7 +21,7 @@
 
         <meta-data
             android:name="com.google.android.gms.client_id"
-            android:value="329253451102-ii9oaip6d4lc8huedkggki0ejeft6hlu.apps.googleusercontent.com" />
+            android:value="329253451102-qlahcg3r9tva6ko7gqa4b5ivp11d57q0.apps.googleusercontent.com" />
 
         <activity
             android:name=".MainActivity"
@@ -36,6 +38,11 @@
 
         <activity android:name="com.google.android.gms.auth.api.signin.internal.SignInHubActivity"
             android:excludeFromRecents="true"
+            android:exported="false" />
+
+        <activity android:name=".signin.SignInActivity" />
+        <activity
+            android:name=".DatePickerActivity"
             android:exported="false" />
 
     </application>
