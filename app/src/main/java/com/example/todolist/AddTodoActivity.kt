@@ -136,29 +136,38 @@ class AddTodoActivity : AppCompatActivity() {
             summary = title
             setDescription(description)
 
-            selectedDate?.time?.let { date ->
-                Log.d("AddTodoActivity", "Création événement pour la date et l'heure: ${date}")
+            selectedDate?.let { date ->
+                val adjustedDate = java.util.Calendar.getInstance().apply {
+                    timeInMillis = date.timeInMillis
+                    add(java.util.Calendar.HOUR_OF_DAY, -1)
+                }
+
                 val startDateTime = EventDateTime().apply {
-                    dateTime = com.google.api.client.util.DateTime(date)
+                    dateTime = com.google.api.client.util.DateTime(adjustedDate.time)
                     timeZone = java.util.TimeZone.getDefault().id
                 }
                 start = startDateTime
 
                 val endDate = java.util.Calendar.getInstance().apply {
-                    timeInMillis = selectedDate!!.timeInMillis
+                    timeInMillis = adjustedDate.timeInMillis
                     add(java.util.Calendar.HOUR_OF_DAY, 1)
                 }
+
                 val endDateTime = EventDateTime().apply {
-                    dateTime = com.google.api.client.util.DateTime(endDate.timeInMillis)
+                    dateTime = com.google.api.client.util.DateTime(endDate.time)
                     timeZone = java.util.TimeZone.getDefault().id
                 }
                 end = endDateTime
+
+                Log.d("AddTodoActivity", "Date sélectionnée: ${SimpleDateFormat("HH:mm", Locale.getDefault()).format(date.time)}")
+                Log.d("AddTodoActivity", "Date ajustée: ${SimpleDateFormat("HH:mm", Locale.getDefault()).format(adjustedDate.time)}")
             } ?: run {
                 Log.e("AddTodoActivity", "Erreur : date et heure sélectionnées non disponibles")
                 throw IllegalStateException("Date et heure sélectionnées non disponibles")
             }
         }
     }
+
 
 
 

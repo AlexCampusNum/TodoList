@@ -129,7 +129,9 @@ class MainActivity : AppCompatActivity(), TodoAdapter.TodoClickListener {
 
         // Afficher les informations dans l'interface
         binding.userNameTextView.text = "Bienvenue, ${account.displayName ?: "Utilisateur"}"
-        binding.userEmailTextView.text = "Email: ${account.email}"
+        binding.logout.setOnClickListener {
+            signOut()
+        }
 
         // Afficher un Toast pour le débogage
         Toast.makeText(this,
