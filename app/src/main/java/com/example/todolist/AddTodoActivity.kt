@@ -8,10 +8,8 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Toast
-import androidx.activity.OnBackPressedDispatcher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.ui.semantics.text
 import com.example.todolist.databinding.ActivityAddTodoBinding
 import com.example.todolist.models.Todo
 import com.example.todolist.signin.SignInActivity
@@ -24,9 +22,7 @@ import com.google.api.services.calendar.CalendarScopes
 import com.google.api.services.calendar.model.Event
 import com.google.api.services.calendar.model.EventDateTime
 import java.io.Serializable
-import java.text.ParseException
 import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
@@ -108,10 +104,10 @@ class AddTodoActivity : AppCompatActivity() {
                 selectedDate = java.util.Calendar.getInstance().apply {
                     timeInMillis = timestamp
                 }
-                val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                val dateTimeFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
                 Toast.makeText(
                     this,
-                    "Date sélectionnée : ${dateFormat.format(selectedDate?.time)}",
+                    "Date et heure sélectionnées : ${dateTimeFormat.format(selectedDate?.time)}",
                     Toast.LENGTH_SHORT
                 ).show()
 
@@ -141,19 +137,30 @@ class AddTodoActivity : AppCompatActivity() {
             setDescription(description)
 
             selectedDate?.time?.let { date ->
-                Log.d("AddTodoActivity", "Création événement pour la date: ${date}")
+                Log.d("AddTodoActivity", "Création événement pour la date et l'heure: ${date}")
                 val startDateTime = EventDateTime().apply {
                     dateTime = com.google.api.client.util.DateTime(date)
-                    timeZone = TimeZone.getDefault().id
+                    timeZone = java.util.TimeZone.getDefault().id
                 }
                 start = startDateTime
-                end = startDateTime
+
+                val endDate = java.util.Calendar.getInstance().apply {
+                    timeInMillis = selectedDate!!.timeInMillis
+                    add(java.util.Calendar.HOUR_OF_DAY, 1)
+                }
+                val endDateTime = EventDateTime().apply {
+                    dateTime = com.google.api.client.util.DateTime(endDate.timeInMillis)
+                    timeZone = java.util.TimeZone.getDefault().id
+                }
+                end = endDateTime
             } ?: run {
-                Log.e("AddTodoActivity", "Erreur : date sélectionnée non disponible")
-                throw IllegalStateException("Date sélectionnée non disponible")
+                Log.e("AddTodoActivity", "Erreur : date et heure sélectionnées non disponibles")
+                throw IllegalStateException("Date et heure sélectionnées non disponibles")
             }
         }
     }
+
+
 
     private fun insertEventToGoogleCalendar(event: Event, email: String) {
         try {
