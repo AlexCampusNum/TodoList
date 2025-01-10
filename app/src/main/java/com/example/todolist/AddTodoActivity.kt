@@ -28,6 +28,7 @@ import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
 class AddTodoActivity : AppCompatActivity() {
 
@@ -64,20 +65,17 @@ class AddTodoActivity : AppCompatActivity() {
                 Todo(null, title, todoDescription, formatter.format(java.util.Date()))
             }
 
+            // Si une date a été sélectionnée, ajouter au calendrier
             if (selectedDate != null) {
                 val event = createGoogleCalendarEvent(title, todoDescription)
-
-                // Récupérer l'email des SharedPreferences
                 val sharedPref = getSharedPreferences("my_prefs", Context.MODE_PRIVATE)
                 val email = sharedPref.getString("user_email", null)
 
                 if (email != null) {
-                    // Appeler insertEventToGoogleCalendar() avec l'email
                     insertEventToGoogleCalendar(event, email)
                 } else {
-                    // Gérer le cas où l'email n'est pas disponible
-                    Log.e("AddTodoActivity", "Erreur : email du compte google non disponible")
-                    Toast.makeText(this, "Erreur : email du compte google non disponible", Toast.LENGTH_SHORT).show()
+                    Log.e("AddTodoActivity", "Email non disponible")
+                    Toast.makeText(this, "Erreur : email non disponible", Toast.LENGTH_SHORT).show()
                 }
             }
 
@@ -127,36 +125,13 @@ class AddTodoActivity : AppCompatActivity() {
         if (selectedDate == null) {
             return
         }
-        val title = binding.etTitle.text.toString()
-        val todoDescription = binding.etNote.text.toString()
 
-        val date = selectedDate.time
-
+        // Stocker la date pour une utilisation ultérieure
         val dateFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        val formattedDate = dateFormatter.format(date)
+        val formattedDate = dateFormatter.format(selectedDate.time)
 
-        if (title.isNotBlank() && todoDescription.isNotBlank()) {
-            todo = Todo(
-                id = 0,
-                title = title,
-                note = todoDescription,
-                date = formattedDate
-            )
-
-            val sharedPref = getSharedPreferences("my_prefs", Context.MODE_PRIVATE)
-            val email = sharedPref.getString("user_email", null)
-
-            if (email != null) {
-                val event = createGoogleCalendarEvent(title, todoDescription)
-                insertEventToGoogleCalendar(event, email)
-//                setResultAndFinish()
-            } else {
-                Log.e("AddTodoActivity", "Erreur : email du compte Google non disponible")
-                Toast.makeText(this, "Erreur : email du compte Google non disponible", Toast.LENGTH_SHORT).show()
-            }
-        } else {
-            Toast.makeText(this, "Veuillez saisir des données", Toast.LENGTH_LONG).show()
-        }
+        // Afficher un Toast pour confirmer la sélection de la date
+        Toast.makeText(this, "Date sélectionnée : $formattedDate", Toast.LENGTH_SHORT).show()
     }
 
 
@@ -168,10 +143,11 @@ class AddTodoActivity : AppCompatActivity() {
             selectedDate?.time?.let { date ->
                 Log.d("AddTodoActivity", "Création événement pour la date: ${date}")
                 val startDateTime = EventDateTime().apply {
-                    setDate(com.google.api.client.util.DateTime(date))
+                    dateTime = com.google.api.client.util.DateTime(date)
+                    timeZone = TimeZone.getDefault().id
                 }
-                setStart(startDateTime)
-                setEnd(startDateTime)
+                start = startDateTime
+                end = startDateTime
             } ?: run {
                 Log.e("AddTodoActivity", "Erreur : date sélectionnée non disponible")
                 throw IllegalStateException("Date sélectionnée non disponible")
@@ -179,20 +155,30 @@ class AddTodoActivity : AppCompatActivity() {
         }
     }
 
-
     private fun insertEventToGoogleCalendar(event: Event, email: String) {
         try {
-            // Essayer d'abord de récupérer le compte depuis GoogleSignIn
-            var account = GoogleSignIn.getLastSignedInAccount(this)
+            Log.d("AddTodoActivity", "Début insertEventToGoogleCalendar")
+            Log.d("AddTodoActivity", "Email reçu: $email")
 
-            if (account == null) {
-                // Si null, essayer de récupérer depuis SignInActivity
-                account = SignInActivity.getLastSignedInAccount()
-            }
+            // Vérifier toutes les sources possibles d'email
+            val account = GoogleSignIn.getLastSignedInAccount(this)
+            var signInAccount = SignInActivity.getLastSignedInAccount()
+            val sharedPref = getSharedPreferences("my_prefs", Context.MODE_PRIVATE)
+            val savedEmail = sharedPref.getString("user_email", null)
+
+            Log.d("AddTodoActivity", "Email du compte actuel: ${account?.email}")
+            Log.d("AddTodoActivity", "Email du SignInActivity: ${signInAccount?.email}")
+            Log.d("AddTodoActivity", "Email dans SharedPrefs: $savedEmail")
+
+            // Afficher un Toast pour le débogage
+            Toast.makeText(this, """
+            Email param: $email
+            Compte actuel: ${account?.email}
+            SharedPrefs: $savedEmail
+        """.trimIndent(), Toast.LENGTH_LONG).show()
 
             if (account == null) {
                 Log.e("AddTodoActivity", "Compte Google non disponible - tentative de reconnexion")
-                // Rediriger vers SignInActivity
                 val intent = Intent(this, SignInActivity::class.java)
                 startActivity(intent)
                 return

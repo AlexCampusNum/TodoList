@@ -100,7 +100,18 @@ class MainActivity : AppCompatActivity(), TodoAdapter.TodoClickListener {
         val account = GoogleSignIn.getLastSignedInAccount(this)
         val sharedPref = getSharedPreferences("my_prefs", Context.MODE_PRIVATE)
 
-        // Centraliser l'accès à l'email utilisateur
+        // Débuggage des informations utilisateur
+        val userEmail = account?.email ?: "Email non disponible"
+        val userName = account?.displayName ?: "Nom non disponible"
+        Log.d("MainActivity", "Email: $userEmail")
+        Log.d("MainActivity", "Nom: $userName")
+
+        // Vérifier aussi les SharedPreferences
+        val savedEmail = sharedPref.getString("user_email", "Non trouvé dans SharedPrefs")
+        val savedName = sharedPref.getString("user_display_name", "Non trouvé dans SharedPrefs")
+        Log.d("MainActivity", "Email dans SharedPrefs: $savedEmail")
+        Log.d("MainActivity", "Nom dans SharedPrefs: $savedName")
+
         account?.email?.let { email ->
             with(sharedPref.edit()) {
                 putString("user_email", email)
@@ -116,7 +127,15 @@ class MainActivity : AppCompatActivity(), TodoAdapter.TodoClickListener {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Afficher les informations dans l'interface
         binding.userNameTextView.text = "Bienvenue, ${account.displayName ?: "Utilisateur"}"
+        binding.userEmailTextView.text = "Email: ${account.email}"
+
+        // Afficher un Toast pour le débogage
+        Toast.makeText(this,
+            "Compte connecté:\nNom: ${account.displayName}\nEmail: ${account.email}",
+            Toast.LENGTH_LONG
+        ).show()
 
         initUI()
 
